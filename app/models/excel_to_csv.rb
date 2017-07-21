@@ -21,7 +21,7 @@ class ExcelToCsv < BaseFile
 						# puts "#{row}"
 						# puts "#{@header_indexes}"
 						row_array << if header_index
-							              row[header_index]
+							              row[header_index].to_s.gsub(/,|"/,"")
 							           else
 													 nil
 						             end
@@ -66,7 +66,9 @@ class ExcelToCsv < BaseFile
 		return flag
 	end
 	def search_column(column)
-		return @header_hash[column] if @header_hash.key?(column) || @header_hash.value?(column)
+		puts @header_hash
+		puts column
+		return @header_hash[column] if @header_hash.key?(column)
 		headers.each do |k, v|
 			if v && v.include?(column)
 				@header_hash[column]=k
