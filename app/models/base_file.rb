@@ -30,7 +30,7 @@ class BaseFile
 	#清洗excel
 	def html_to_csv(file)
 		doc = Nokogiri::HTML(file)
-		aFile = File.new("#{Rails.root}/public/#{file.original_filename}-#{Time.now.to_i}.csv", "a+")
+		aFile = File.new("#{Rails.root}/public/csv/#{file.original_filename}-#{Time.now.to_i}.csv", "a+")
 		doc.css("table tr").each do |d|
 			row=[]
 			row=d.css("td").map(&:text)
@@ -45,7 +45,7 @@ class BaseFile
 	#转换excel
 	def parse_csv(file)
 		f = File.open(file.path, "r:utf-16")
-		aFile = File.new("#{Rails.root}/public/#{file.original_filename}-#{Time.now.to_i}.csv", "a+")
+		aFile = File.new("#{Rails.root}/public/csv/#{file.original_filename}-#{Time.now.to_i}.csv", "a+")
 		i = 0
 		begin
 			f.each do |line|
