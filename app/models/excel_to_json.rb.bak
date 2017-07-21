@@ -1,0 +1,118 @@
+require 'roo'
+require 'roo/xls/excel'
+require 'csv'
+class ExcelToJson
+	attr_reader :excel, :file_type, :headers, :file_name, :columns, :column_names, :header_hash, :column_values, :filters, :filter_values
+	
+	def initialize(file)
+		@file_type = File.extname(file.path)
+		@file_name = file.original_filename
+		@column_names = ConvertConfig.headers.keys.flatten.uniq.compact
+		@column_values = ConvertConfig.headers.values.flatten.uniq.compact
+		@headers = ConvertConfig.headers
+		@filters = ConvertConfig.filters
+		@filter_values = ConvertConfig.filter_values
+		path=file.path
+		@header_hash = {}
+		begin
+			case @file_type
+				when '.csv'
+					csv_file=parse_csv(file)
+					@excel = Roo::CSV.new(csv_file.path)
+					@excel.default_sheet = @excel.sheets.first
+				when '.xls'
+					# parse_csv(file)
+					@excel = Roo::Spreadsheet.open(path)
+					# @excel = Roo::Excel.new(path)
+					@excel.default_sheet = @excel.sheets.first
+				when '.xlsx'
+					@excel = Roo::Excelx.new(path)
+					@excel.default_sheet = @excel.sheets.first
+				else
+					raise "Unknown file type: #{file.original_filename}"
+			end
+		rescue Ole::Storage::FormatError => e
+			csv_file = html_to_csv(file)
+			@excel = Roo::CSV.new(csv_file.path)
+			@excel.default_sheet = @excel.sheets.first
+		rescue CSV::MalformedCSVError => e
+			puts "CSV::MalformedCSVError: #{file.original_filename}"
+		end
+	end
+	
+	def downlod_csv
+		rows=[]
+		header=excel_header
+		header_array=[]
+		
+		Rails.logger.info '「我要开始导出数据了」'
+		return CSV.generate do |csv|
+			csv << @column_names #这是文件的headers
+			@excel.each_with_index do |row, index|
+				next if index <= header[:index]
+				row_array=[]
+				header[:columns].each_with_index do |col, col_index|
+					# next if ["支出", "借"].include?(row[col_index])
+					column_name=find_column(col)
+					#puts "#{col} ==> #{@filter_values} ==> #{row[col_index]}"
+					if @filter_values.include?(row[col_index])
+						row.clear
+						break
+					end
+					next if column_name.blank?
+					start_index = @column_names.index(column_name)
+					row_array[@column_names.index(column_name)] = row[col_index].to_i if start_index && start_index > -1
+				end
+				puts row
+				next if row.blank?
+				if @file_name.include?("个人")
+					row_array << "是"
+				else
+					row_array << "否"
+				end
+				csv << row_array
+			end
+		end
+	end
+	
+	def build_csv(**args,&blk)
+	
+	end
+	
+	def find_column(column)
+		key=""
+		return @header_hash[column] if @header_hash.key?(column)
+		ConvertConfig["headers"].each do |header|
+			headers=header[1]
+			if headers && headers.include?(column)
+				key = header[0]
+				@header_hash[column]=key
+				break
+			end
+		end
+		return key
+	end
+	
+	def excel_header
+		row_index = 0
+		col_array = []
+		@excel.each_with_index do |row, index|
+			if valid_header?(row)
+				row_index = index
+				col_array = row
+				break
+			end
+		end
+		return {columns: col_array, index: row_index}
+	end
+	
+	def valid_header?(row)
+		size=0
+		@column_values.each do |h|
+			size+=1 if row.compact.join("").include?(h)
+		end
+		return size > 4
+	end
+	
+	
+end

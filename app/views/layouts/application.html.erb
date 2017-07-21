@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Forg</title>
+    <%= csrf_meta_tags %>
+
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  </head>
+  <style type="text/css">
+    <!--
+    .align_center {
+      height:200px;
+      width:500px;
+      text-align:center;
+      margin:0 auto;
+      vertical-align:middle;
+    }
+    -->
+  </style>
+
+  <body>
+    <div class="align_center">
+      <%= yield %>
+    </div>
+  </body>
+</html>

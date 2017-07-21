@@ -1,0 +1,24 @@
+<h1>转换excel</h1>
+
+<script>
+	  $(function(){
+		  resetButton();
+		})
+
+		function resetButton() {
+			setTimeout(function(){
+				$("button").attr("disabled",false)
+				$("button").text("转换")
+				$("div .notice").text("")
+			},1000)
+		}
+</script>
+
+<% flash.each do |name, msg| %>
+		<%= content_tag :div, msg, class: name %>
+		</br>
+<% end %>
+<%= form_tag('/home/upload.csv', multipart: true) do %>
+    <%= file_field_tag 'excel' %>
+    <%= button_tag("转换", data: { disable_with: "转换中,请稍后..." },"onClick"=>"resetButton()")  %>
+<% end %>
